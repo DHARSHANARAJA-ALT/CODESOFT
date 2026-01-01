@@ -1,0 +1,78 @@
+import React, { useState } from 'react';
+
+export default function MiniQuiz() {
+  const [mode, setMode] = useState('create'); // 'create', 'play', 'result'
+  const [quiz, setQuiz] = useState({ title: '', questions: [] });
+  const [tempQ, setTempQ] = useState({ text: '', options: ['', ''], correct: 0 });
+  const [answers, setAnswers] = useState([]);
+  const [score, setScore] = useState(0);
+
+  // --- CREATOR LOGIC ---
+  const addQuestion = () => {
+    setQuiz({ ...quiz, questions: [...quiz.questions, tempQ] });
+    setTempQ({ text: '', options: ['', ''], correct: 0 }); // reset
+  };
+
+  // --- PLAYER LOGIC ---
+  const finishQuiz = () => {
+    const finalScore = answers.reduce((acc, choice, i) => 
+      choice === quiz.questions[i].correct ? acc + 1 : acc, 0);
+    setScore(finalScore);
+    setMode('result');
+  };
+
+  return (
+    <div className="max-w-md mx-auto p-6 bg-white shadow-xl rounded-xl mt-10 font-sans">
+      {/* 1. BUILDER MODE */}
+      {mode === 'create' && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">New Quiz</h2>
+          <input className="w-full border p-2 rounded" placeholder="Quiz Title" onChange={e => setQuiz({...quiz, title: e.target.value})} />
+          
+          <div className="bg-gray-50 p-3 rounded">
+            <input className="w-full mb-2 p-1" placeholder="Question" value={tempQ.text} onChange={e => setTempQ({...tempQ, text: e.target.value})} />
+            {tempQ.options.map((opt, i) => (
+              <input key={i} className="block w-full mb-1 text-sm border-b" placeholder={`Option ${i+1}`} 
+                onChange={e => {
+                  let copy = [...tempQ.options]; copy[i] = e.target.value;
+                  setTempQ({...tempQ, options: copy});
+                }} 
+              />
+            ))}
+            <button className="text-blue-500 text-xs mt-2" onClick={addQuestion}>+ Add Question to List</button>
+          </div>
+
+          <button className="w-full bg-black text-white p-2 rounded" onClick={() => setMode('play')}>Start Taking Quiz ({quiz.questions.length} Qs)</button>
+        </div>
+      )}
+
+      {/* 2. PLAYER MODE */}
+      {mode === 'play' && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold">{quiz.title}</h2>
+          {quiz.questions.map((q, i) => (
+            <div key={i}>
+              <p className="font-medium mb-2">{i+1}. {q.text}</p>
+              {q.options.map((opt, oi) => (
+                <button key={oi} onClick={() => { let a = [...answers]; a[i] = oi; setAnswers(a); }}
+                  className={`block w-full text-left p-2 mb-1 border rounded ${answers[i] === oi ? 'bg-blue-100 border-blue-500' : ''}`}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+          ))}
+          <button className="w-full bg-green-600 text-white p-3 rounded" onClick={finishQuiz}>Submit Answers</button>
+        </div>
+      )}
+
+      {/* 3. RESULTS MODE */}
+      {mode === 'result' && (
+        <div className="text-center py-10">
+          <h2 className="text-4xl font-black mb-2">{score} / {quiz.questions.length}</h2>
+          <p className="text-gray-500 mb-6">Great job completing the quiz!</p>
+          <button className="underline" onClick={() => window.location.reload()}>Create New Quiz</button>
+        </div>
+      )}
+    </div>
+  );
+}
